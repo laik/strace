@@ -35,6 +35,15 @@
 # include "xlat/ptp_extts_flags.h"
 # include "xlat/ptp_perout_flags.h"
 
+static void
+print_ptp_clock_time(const struct ptp_clock_time *const p)
+{
+	PRINT_FIELD_D("{", *p, sec);
+	PRINT_FIELD_U(", ", *p, nsec);
+	tprints("}");
+	tprints_comment(sprinttime_nsec(p->sec, p->nsec));
+}
+
 int
 ptp_ioctl(struct tcb *const tcp, const unsigned int code,
 	  const kernel_ulong_t arg)
@@ -65,12 +74,11 @@ ptp_ioctl(struct tcb *const tcp, const unsigned int code,
 		if (umove_or_printaddr(tcp, arg, &perout))
 			break;
 
-		PRINT_FIELD_D("{start={", perout.start, sec);
-		PRINT_FIELD_U(", ", perout.start, nsec);
-		PRINT_FIELD_D("}, period={", perout.period, sec);
-		PRINT_FIELD_U(", ", perout.period, nsec);
-		PRINT_FIELD_D("}, ", perout, index);
-		PRINT_FIELD_FLAGS(", ", perout, flags, ptp_perout_flags, "PTP_???");
+		PRINT_FIELD_OBJ_PTR("{", perout, start, print_ptp_clock_time);
+		PRINT_FIELD_OBJ_PTR(", ", perout, period, print_ptp_clock_time);
+		PRINT_FIELD_D(", ", perout, index);
+		PRINT_FIELD_FLAGS(", ", perout, flags, ptp_perout_flags,
+				  "PTP_???");
 		tprints("}");
 		break;
 	}
